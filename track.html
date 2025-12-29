@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Track — Luggage Link</title>
+  <style>
+    :root { --bg:#0b1020; --card:#121a33; --text:#eef2ff; --muted:#b6c1ff; --accent:#6aa6ff; --line:rgba(255,255,255,.12); }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:radial-gradient(1000px 600px at 20% 10%, #18235a 0, var(--bg) 55%); color:var(--text); }
+    .wrap{ max-width:920px; margin:0 auto; padding:22px; }
+    a{ color:inherit; text-decoration:none; }
+    .top{ display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+    .btn{ border:1px solid var(--line); background:transparent; padding:10px 14px; border-radius:14px; }
+    .btn.primary{ background:linear-gradient(135deg, #6aa6ff, #9b6aff); border:none; color:#071022; font-weight:800; }
+    .card{ margin-top:16px; background:rgba(18,26,51,.85); border:1px solid var(--line); border-radius:18px; padding:18px; backdrop-filter: blur(8px); }
+    h1{ margin:0 0 6px; font-size:26px; }
+    p{ margin:0; color:var(--muted); }
+    .row{ margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; }
+    input{
+      flex:1; min-width:220px;
+      padding:12px 12px; border-radius:14px; border:1px solid var(--line);
+      background:rgba(255,255,255,.03); color:var(--text); outline:none;
+    }
+    .result{ margin-top:14px; display:none; border:1px solid var(--line); border-radius:16px; padding:14px; }
+    .status{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background:rgba(106,166,255,.10); border:1px solid rgba(106,166,255,.35); color:var(--text); font-weight:700; }
+    .muted{ color:var(--muted); font-size:13px; line-height:1.5; }
+    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+    .box{ border:1px solid var(--line); border-radius:16px; padding:12px; }
+    @media(max-width:860px){ .grid{ grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <div style="font-weight:900;">Luggage Link</div>
+        <div style="color:var(--muted); font-size:13px;">Track Booking</div>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <a class="btn" href="index.html">Home</a>
+        <a class="btn primary" href="book.html">Book</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h1>Track your booking</h1>
+      <p>Enter your booking code (example: LL-ABC123).</p>
+
+      <div class="row">
+        <input id="codeInput" placeholder="LL-XXXXXX" />
+        <button class="btn primary" id="trackBtn">Track</button>
+      </div>
+
+      <div id="resultBox" class="result">
+        <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center;">
+          <div>
+            <div style="font-weight:900; letter-spacing:.4px;" id="codeLabel">LL-XXXXXX</div>
+            <div class="muted" id="createdLabel">Created: —</div>
+          </div>
+          <div class="status" id="statusLabel">Status: —</div>
+        </div>
+
+        <div class="grid">
+          <div class="box">
+            <div class="muted">Service</div>
+            <div id="serviceLabel" style="font-weight:800;">—</div>
+            <div class="muted" style="margin-top:8px;">Bags</div>
+            <div id="bagsLabel" style="font-weight:800;">—</div>
+          </div>
+          <div class="box">
+            <div class="muted">Pickup → Drop-off</div>
+            <div id="routeLabel" style="font-weight:800;">—</div>
+            <div class="muted" style="margin-top:8px;">Pickup time</div>
+            <div id="timeLabel" style="font-weight:800;">—</div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;" class="muted">
+          Need help? Contact <b>0917 248 4685</b> and share your booking code.
+        </div>
+      </div>
+
+      <div id="notFound" class="muted" style="margin-top:14px; display:none;">
+        No booking found in this browser. If you booked on another device, or once we connect a real backend,
+        you’ll be able to track anywhere.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "luggagelink_bookings_v1";
+
+    function loadBookings(){
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
+      catch { return []; }
+    }
+
+    function formatISO(iso){
+      try { return new Date(iso).toLocaleString(); } catch { return iso; }
+    }
+
+    function findBooking(code){
+      const list = loadBookings();
+      const norm = (code || "").trim().toUpperCase();
+      return list.find(b => (b.code || "").toUpperCase() === norm);
+    }
+
+    function show(booking){
+      document.getElementById("resultBox").style.display = "block";
+      document.getElementById("notFound").style.display = "none";
+
+      document.getElementById("codeLabel").textContent = booking.code || "—";
+      document.getElementById("createdLabel").textContent = "Created: " + formatISO(booking.createdAt || "");
+      document.getElementById("statusLabel").textContent = "Status: " + (booking.status || "—");
+
+      document.getElementById("serviceLabel").textContent = booking.service || "—";
+      document.getElementById("bagsLabel").textContent = booking.bags || "—";
+      document.getElementById("routeLabel").textContent = (booking.pickup || "—") + " → " + (booking.dropoff || "—");
+      document.getElementById("timeLabel").textContent = booking.pickupTime ? formatISO(booking.pickupTime) : "—";
+    }
+
+    function showNotFound(){
+      document.getElementById("resultBox").style.display = "none";
+      document.getElementById("notFound").style.display = "block";
+    }
+
+    document.getElementById("trackBtn").addEventListener("click", () => {
+      const code = document.getElementById("codeInput").value;
+      const booking = findBooking(code);
+      booking ? show(booking) : showNotFound();
+    });
+
+    // Auto-fill from query string ?code=
+    const params = new URLSearchParams(location.search);
+    const qcode = params.get("code");
+    if(qcode){
+      document.getElementById("codeInput").value = qcode;
+      const booking = findBooking(qcode);
+      booking ? show(booking) : showNotFound();
+    }
+  </script>
+</body>
+</html>

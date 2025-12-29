@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Book — Luggage Link</title>
+  <style>
+    :root { --bg:#0b1020; --card:#121a33; --text:#eef2ff; --muted:#b6c1ff; --accent:#6aa6ff; --line:rgba(255,255,255,.12); }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:radial-gradient(1000px 600px at 20% 10%, #18235a 0, var(--bg) 55%); color:var(--text); }
+    .wrap{ max-width:920px; margin:0 auto; padding:22px; }
+    a{ color:inherit; text-decoration:none; }
+    .top{ display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+    .btn{ border:1px solid var(--line); background:transparent; padding:10px 14px; border-radius:14px; }
+    .btn.primary{ background:linear-gradient(135deg, #6aa6ff, #9b6aff); border:none; color:#071022; font-weight:800; }
+    .card{ margin-top:16px; background:rgba(18,26,51,.85); border:1px solid var(--line); border-radius:18px; padding:18px; backdrop-filter: blur(8px); }
+    h1{ margin:0 0 6px; font-size:26px; }
+    p{ margin:0; color:var(--muted); }
+    form{ margin-top:14px; display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    label{ display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--muted); }
+    input, select, textarea{
+      width:100%; padding:12px 12px; border-radius:14px; border:1px solid var(--line);
+      background:rgba(255,255,255,.03); color:var(--text); outline:none;
+    }
+    textarea{ min-height:92px; resize:vertical; }
+    .full{ grid-column:1 / -1; }
+    .note{ font-size:13px; color:var(--muted); line-height:1.5; }
+    .success{ display:none; border:1px solid rgba(106,166,255,.5); background:rgba(106,166,255,.10); padding:14px; border-radius:16px; margin-top:14px; }
+    .code{ font-weight:900; letter-spacing:.8px; font-size:20px; }
+    @media(max-width:860px){ form{ grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <div style="font-weight:900;">Luggage Link</div>
+        <div style="color:var(--muted); font-size:13px;">Booking Form</div>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <a class="btn" href="index.html">Home</a>
+        <a class="btn" href="track.html">Track</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h1>Book a service</h1>
+      <p>Fill this out. You’ll get a booking code you can use to track status.</p>
+
+      <!--
+        OPTION A (Static demo): keeps bookings in your browser only.
+        OPTION B (Real submissions): connect to Formspree/Google Sheets backend later.
+      -->
+      <form id="bookingForm">
+        <label>
+          Full name
+          <input required name="name" placeholder="Juan Dela Cruz" />
+        </label>
+
+        <label>
+          Mobile number
+          <input required name="phone" placeholder="09XXXXXXXXX" />
+        </label>
+
+        <label>
+          Service type
+          <select required name="service">
+            <option value="">Select…</option>
+            <option>Storage</option>
+            <option>Point-to-point transfer</option>
+            <option>Storage + Transfer</option>
+          </select>
+        </label>
+
+        <label>
+          Number of bags
+          <input required name="bags" type="number" min="1" value="1" />
+        </label>
+
+        <label>
+          Pickup location
+          <input required name="pickup" placeholder="Airport / Hotel / Address" />
+        </label>
+
+        <label>
+          Drop-off location
+          <input required name="dropoff" placeholder="Hotel / Condo / Address" />
+        </label>
+
+        <label>
+          Pickup date & time
+          <input required name="pickupTime" type="datetime-local" />
+        </label>
+
+        <label>
+          Notes (optional)
+          <input name="notes" placeholder="Flight details, fragile items, etc." />
+        </label>
+
+        <label class="full">
+          Special instructions (optional)
+          <textarea name="instructions" placeholder="Add details here…"></textarea>
+        </label>
+
+        <div class="full" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <button class="btn primary" type="submit">Generate Booking Code</button>
+          <a class="btn" href="track.html">Already have a code? Track</a>
+        </div>
+
+        <div class="full note">
+          This page can work as a demo now. To make it fully operational (you receive bookings in real-time),
+          connect the form to Google Sheets or a simple backend — I can set that up next.
+        </div>
+      </form>
+
+      <div id="successBox" class="success">
+        <div style="font-weight:800;">Booking created</div>
+        <div style="margin-top:6px; color:var(--muted);">
+          Your booking code:
+        </div>
+        <div class="code" id="bookingCode">LL-XXXXXX</div>
+        <div style="margin-top:10px;">
+          <a class="btn" id="trackLink" href="track.html">Track this booking</a>
+        </div>
+        <div style="margin-top:10px; color:var(--muted); font-size:13px;">
+          Next step: We confirm via SMS/Call using <b>0917 248 4685</b>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Demo "database" (browser only)
+    const STORAGE_KEY = "luggagelink_bookings_v1";
+
+    function loadBookings(){
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
+      catch { return []; }
+    }
+    function saveBookings(list){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    }
+    function makeCode(){
+      const rnd = Math.random().toString(36).slice(2, 8).toUpperCase();
+      return `LL-${rnd}`;
+    }
+
+    document.getElementById("bookingForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const data = Object.fromEntries(fd.entries());
+      const code = makeCode();
+
+      const booking = {
+        code,
+        createdAt: new Date().toISOString(),
+        status: "Submitted",
+        ...data
+      };
+
+      const list = loadBookings();
+      list.unshift(booking);
+      saveBookings(list);
+
+      // show success
+      document.getElementById("bookingCode").textContent = code;
+      document.getElementById("successBox").style.display = "block";
+
+      // prefill tracking via query string
+      const link = document.getElementById("trackLink");
+      link.href = `track.html?code=${encodeURIComponent(code)}`;
+
+      e.target.reset();
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    });
+  </script>
+</body>
+</html>
